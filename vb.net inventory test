@@ -1,0 +1,131 @@
+Imports System.Data.SqlClient
+Public Class Form1
+    Private Sub btnClose_Click(sender As Object, e As EventArgs) Handles btnClose.Click
+        Me.Close()
+    End Sub
+
+    Private Sub btnSave_Click(sender As Object, e As EventArgs) Handles btnSave.Click
+        Dim itemID As Integer
+        Dim itemName As String
+        Dim quantity As Integer
+        Dim unitPrice As Integer
+
+        If Not Integer.TryParse(txtID.Text, itemID) Then
+            MessageBox.Show("Please enter a valid ID number! ")
+            txtID.Focus()
+            Exit Sub
+        End If
+
+
+        If Not Integer.TryParse(txtQuantity.Text, quantity) Then
+            MessageBox.Show("Please enter a valid quantity number! ")
+            txtID.Focus()
+            Exit Sub
+        End If
+
+
+        If Not Integer.TryParse(txtPrice.Text, unitPrice) Then
+            MessageBox.Show("Please enter a valid amount! ")
+            txtPrice.Focus()
+            Exit Sub
+        End If
+
+        If String.IsNullOrWhiteSpace(txtName.Text) Then
+            MessageBox.Show("Please enter a valid name!")
+            txtName.Focus()
+            Exit Sub
+        End If
+        MessageBox.Show("Data saved successfully!😁😁")
+
+        Dim con As New SqlConnection("Data Source=DESKTOP-345CQH4;Initial Catalog=DUKE MART;Integrated Security=True")
+        Try
+            con.Open()
+            Dim query As String = "INSERT INTO inventory" &
+                "(itemid, itemname, quantity, price)" &
+                "VALUES(@itemid,@itemname,@quantity,@price)"
+            Dim cmd As New SqlCommand(query, con)
+            cmd.Parameters.AddWithValue("@itemid", txtID.Text)
+            cmd.Parameters.AddWithValue("@itemname", txtName.Text)
+            cmd.Parameters.AddWithValue("@quantity", txtQuantity.Text)
+            cmd.Parameters.AddWithValue("@price", txtPrice.Text)
+            cmd.ExecuteNonQuery()
+            MessageBox.Show("Record successfully saved", "Saving")
+
+        Catch ex As Exception
+            MessageBox.Show("An error occured")
+
+        Finally
+            If con.State = ConnectionState.Open Then
+                con.Close()
+            End If
+        End Try
+    End Sub
+
+    Private Sub btnClear_Click(sender As Object, e As EventArgs) Handles btnClear.Click
+        txtID.Text = ""
+        txtName.Text = ""
+        txtPrice.Text = ""
+        txtQuantity.Text = ""
+
+    End Sub
+
+    Private Sub btnDelete_Click(sender As Object, e As EventArgs) Handles btnDelete.Click
+        Dim itemID As Integer = txtID.Text
+        Dim itemName As String = txtName.Text
+        Dim quantity As Integer = txtQuantity.Text
+        Dim unitPrice As Integer = txtPrice.Text
+
+        If Not Integer.TryParse(txtID.Text, itemID) Then
+            MessageBox.Show("Please enter a valid ID number to delete!")
+            txtID.Focus()
+            Exit Sub
+        End If
+
+        Dim confirm = MessageBox.Show("Are you sure you want to delete this record?", "Confirm Delete", MessageBoxButtons.YesNo)
+        If confirm = DialogResult.No Then Exit Sub
+
+        Dim connectionString As String = "Data Source=DESKTOP-345CQH4;Initial Catalog=DUKE MART;Integrated Security=True"
+        Dim query As String = "DELETE FROM inventory WHERE itemid = @itemid"
+
+        Try
+            Using con As New SqlConnection(connectionString)
+                Using cmd As New SqlCommand(query, con)
+                    cmd.Parameters.AddWithValue("@itemid", itemID)
+                    con.Open()
+                    Dim rowsAffected = cmd.ExecuteNonQuery()
+
+                    If rowsAffected > 0 Then
+                        MessageBox.Show("Record deleted successfully!", "Deleted")
+                        btnClear.PerformClick()
+                    Else
+                        MessageBox.Show("No record found with that ID.", "Not Found")
+                    End If
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("An error occurred: " & ex.Message, "Error")
+        End Try
+    End Sub
+
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.InventoryTableAdapter.Fill(Me.DUKE_MARTDataSet.inventory)
+
+    End Sub
+
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles btnpreview.Click
+
+        Dim con As New SqlConnection("Data Source=DESKTOP-345CQH4;Initial Catalog=DUKE MART;Integrated Security=True")
+        Try
+            con.Open()
+            Dim myquery As String = "SELECT * FROM inventory"
+            Dim cmd As New SqlCommand(myquery, con)
+            Dim da As New SqlDataAdapter(cmd)
+            Dim dt As New DataTable()
+            da.Fill(dt)
+            dgvpreview.datasource = dt
+
+        Catch ex As Exception
+            MessageBox.Show("Error! Record not saved " & ex.Message)
+        End Try
+    End Sub
+End Class
